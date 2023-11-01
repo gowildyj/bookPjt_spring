@@ -1,17 +1,14 @@
 package com.office.library.admin.member;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpSession;
-import java.sql.SQLOutput;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -90,7 +87,7 @@ public class AdminMemberController {
 //    }
 
     @GetMapping("/setAdminApproval")
-    public String setAdminApproval(@RequestParam("a_m_no") int a_m_no){
+    public String setAdminApproval(@RequestParam("a_m_no") int a_m_no) {
         System.out.println("AMController-setAdminApporval()");
         String nextPage = "redirect:/admin/member/listupAdmin";
 
@@ -98,5 +95,31 @@ public class AdminMemberController {
         return nextPage;
     }
 
+    @GetMapping("/modifyAccontForm")
+    public String modifyAccontForm(HttpSession httpSession) {
+        System.out.println("AMController-modifyAccontForm()");
+        String nextPage = "admin/member/modify_account_form";
 
+        AdminMemberVo loginedAdminMemberVo = (AdminMemberVo) httpSession.getAttribute("loginedAdminMemberVo");
+        if (loginedAdminMemberVo == null) {
+            nextPage = "redirect:/admin/member/loginForm";
+        }
+        return nextPage;
+    }
+
+    @PostMapping("/modifyAccountConfirm")
+    public String modifyAccountConfirm(AdminMemberVo adminMemberVo, HttpSession httpSession) {
+        System.out.println("AMContriller-modifyAccountConfirm()");
+        String nextPage = "admin/member/modify_account_ok";
+
+        int result = adminMemberService.modifyAccountConfirm(adminMemberVo);
+        if (result > 0) {
+            AdminMemberVo loginedAdminMemberVo = adminMemberService.getLoginedAdminMemberVo(adminMemberVo.getA_m_no());
+            httpSession.setAttribute("loginedAdminMemberVo", loginedAdminMemberVo);
+            httpSession.setMaxInactiveInterval(60 * 30);
+        } else {
+            nextPage = "admin/member/modify_acocunt_ng";
+        }
+        return nextPage;
+    }
 }

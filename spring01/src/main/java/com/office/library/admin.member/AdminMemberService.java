@@ -45,7 +45,12 @@ public class AdminMemberService {
     }
 
     public void setAdminApproval(int a_m_no) {
-        System.out.println("AMsetAdminApprval()");
+        System.out.println("AMService-AdminApprval()");
         int result = adminMemberDao.updateAdminAccount(a_m_no);
+    }
+
+    public int modifyAccountConfirm(AdminMemberVo adminMemberVo) {
+        System.out.println("AMService-modifyAccountConfirm()");
+        return adminMemberDao.selectAdmin(a_m_no);
     }
 }
