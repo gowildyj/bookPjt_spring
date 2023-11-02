@@ -2,8 +2,14 @@ package com.office.library.admin.member;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.stereotype.Service;
 
+import javax.mail.internet.MimeMessage;
+import java.security.SecureRandom;
+import java.util.Date;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -14,13 +20,14 @@ public class AdminMemberService {
     final static public int ADMIN_ACCOUNT_CREATE_FAIL = -1;
 
     private final AdminMemberDao adminMemberDao;
+    private final JavaMailSenderImpl javaMailSenderImpl;
 
-    public int createAccountConfirm(AdminMemberVo adminMemberVo){
+    public int createAccountConfirm(AdminMemberVo adminMemberVo) {
         System.out.println("AMService-createAccountConfirm()");
         boolean isMember = adminMemberDao.isAdminMember(adminMemberVo.getA_m_id());
-        if(!isMember) {
+        if (!isMember) {
             int result = adminMemberDao.insertAdminAccount(adminMemberVo);
-            if(result>0) return ADMIN_ACCOUNT_CREATE_SUCCESS;
+            if (result > 0) return ADMIN_ACCOUNT_CREATE_SUCCESS;
             else return ADMIN_ACCOUNT_CREATE_FAIL;
         }
         return ADMIN_ACCOUNT_ALREADY_EXIST;
@@ -30,7 +37,7 @@ public class AdminMemberService {
         System.out.println("AMService-loginConfirm()");
         AdminMemberVo loginedAdminMemberVo = adminMemberDao.selectAdmin(adminMemberVo);
 
-        if(loginedAdminMemberVo!=null)
+        if (loginedAdminMemberVo != null)
             System.out.println("ADMIN_ACCOUNT_LOGIN_SUCCESS");
         else
             System.out.println("ADMIN_ACCOUNT_LOGIN_FAIL");
@@ -45,12 +52,70 @@ public class AdminMemberService {
     }
 
     public void setAdminApproval(int a_m_no) {
-        System.out.println("AMService-AdminApprval()");
+        System.out.println("AMService-AdminApproval()");
         int result = adminMemberDao.updateAdminAccount(a_m_no);
+    }
+
+    public int modifyAccountConfirm(int a_m_no) {
+        System.out.println("AMService-modifyAccountConfirm()");
+        return adminMemberDao.updateAdminAccount(a_m_no);
     }
 
     public int modifyAccountConfirm(AdminMemberVo adminMemberVo) {
         System.out.println("AMService-modifyAccountConfirm()");
+        return adminMemberDao.updateAdminAccount(adminMemberVo);
+    }
+
+    public AdminMemberVo getLoginedAdminMemberVo(int a_m_no) {
+        System.out.println("AMService-getLoginedAdminMemberVo()");
         return adminMemberDao.selectAdmin(a_m_no);
     }
+
+    public int findPasswordConfirm(AdminMemberVo adminMemberVo) {
+        System.out.println("AMService-findPasswordConfirm()");
+
+        AdminMemberVo selectedAdminMemberVo =
+                adminMemberDao.selectAdmin(adminMemberVo.getA_m_id(),
+                        adminMemberVo.getA_m_name(), adminMemberVo.getA_m_mail());
+
+        int result = 0;
+        if (selectedAdminMemberVo != null) {
+            String newPassword = createNewPassword();
+            result = adminMemberDao.updateAdminAccount(adminMemberVo.getA_m_id(), newPassword);
+        }
+        return result;
+    }
+
+    public String createNewPassword() {
+        System.out.println("AMService-createNewPassword()");
+        char[] chars = new char[]{
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+        StringBuffer stringBuffer = new StringBuffer();
+        SecureRandom secureRandom = new SecureRandom();
+        secureRandom.setSeed(new Date().getTime());
+        int index = 0;
+        int length = chars.length;
+        for (int i = 0; i < 8; i++) {
+            if (index % 2 == 0) stringBuffer.append(String.valueOf(chars[index]).toUpperCase());
+            else
+                stringBuffer.append(String.valueOf(chars[index]).toLowerCase());
+        }
+        System.out.println("AMService-New Password: " + stringBuffer.toString());
+        return stringBuffer.toString();
+    }
+
+    private void sendNewPasswordByMail(String toMailAddr, String newPassword) {
+        System.out.println("AMService-sendNewPasswordByMail");
+        final MimeMessagePreparator mimeMessagePreparator = new MimeMessagePreparator() {
+            @Override
+            public void prepare(MimeMessage mimeMessage) throws Exception {
+                final MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+                mimeMessageHelper.setTo(toMailAddr);
+                mimeMessageHelper.setSubject("[도서관] 새 비밀번호 안내입니다");
+                mimeMessageHelper.setText("새 비밀번호: " + newPassword, true);
+            }
+        };
+        javaMailSenderImpl.send(mimeMessagePreparator);
+    }
 }
+

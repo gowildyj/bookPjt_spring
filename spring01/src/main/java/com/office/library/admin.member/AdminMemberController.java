@@ -17,6 +17,7 @@ import java.util.List;
 public class AdminMemberController {
     private final AdminMemberService adminMemberService;
 
+    //    회원가입
     @GetMapping("/createAccountForm")
     public String createAccountForm() {
         System.out.println("AMController-createAccountForm()");
@@ -33,6 +34,7 @@ public class AdminMemberController {
         return nextPage;
     }
 
+    //    로그인
     @GetMapping("/loginForm")
     public String loginForm() {
         System.out.println("AMController-loginForm()");
@@ -54,6 +56,7 @@ public class AdminMemberController {
         return nextPage;
     }
 
+    //    로그아웃
     @GetMapping("/logoutConfirm")
     public String logoutConfirm(HttpSession httpSession) {
         System.out.println("AMController-logoutConfirm()");
@@ -86,18 +89,20 @@ public class AdminMemberController {
 //        return modelAndView;
 //    }
 
+    //    관리자 로그인 승인
     @GetMapping("/setAdminApproval")
     public String setAdminApproval(@RequestParam("a_m_no") int a_m_no) {
-        System.out.println("AMController-setAdminApporval()");
+        System.out.println("AMController-setAdminApproval()");
         String nextPage = "redirect:/admin/member/listupAdmin";
 
         adminMemberService.setAdminApproval(a_m_no);
         return nextPage;
     }
 
-    @GetMapping("/modifyAccontForm")
-    public String modifyAccontForm(HttpSession httpSession) {
-        System.out.println("AMController-modifyAccontForm()");
+    //    계정 정보 수정
+    @GetMapping("/modifyAccountForm")
+    public String modifyAccountForm(HttpSession httpSession) {
+        System.out.println("AMController-modifyAccountForm()");
         String nextPage = "admin/member/modify_account_form";
 
         AdminMemberVo loginedAdminMemberVo = (AdminMemberVo) httpSession.getAttribute("loginedAdminMemberVo");
@@ -109,7 +114,7 @@ public class AdminMemberController {
 
     @PostMapping("/modifyAccountConfirm")
     public String modifyAccountConfirm(AdminMemberVo adminMemberVo, HttpSession httpSession) {
-        System.out.println("AMContriller-modifyAccountConfirm()");
+        System.out.println("AMController-modifyAccountConfirm()");
         String nextPage = "admin/member/modify_account_ok";
 
         int result = adminMemberService.modifyAccountConfirm(adminMemberVo);
@@ -118,8 +123,26 @@ public class AdminMemberController {
             httpSession.setAttribute("loginedAdminMemberVo", loginedAdminMemberVo);
             httpSession.setMaxInactiveInterval(60 * 30);
         } else {
-            nextPage = "admin/member/modify_acocunt_ng";
+            nextPage = "admin/member/modify_account_ng";
         }
+        return nextPage;
+    }
+
+    //    비밀번호 찾기
+    @GetMapping("/findPasswordForm")
+    public String findPasswordForm() {
+        System.out.println("AMController-findPasswordForm()");
+        String nextPage = "/admin/member/find_password_form";
+        return nextPage;
+    }
+
+    @PostMapping("/findPasswordConfirm")
+    public String findPasswordConfirm(AdminMemberVo adminMemberVo) {
+        System.out.println("AMController-findPasswordConfirm()");
+        String nextPage = "admin/member/find_password_ok";
+
+        int result = adminMemberService.findPasswordConfirm(adminMemberVo);
+        if (result <= 0) nextPage = "admin/member/find_password_ng";
         return nextPage;
     }
 }
